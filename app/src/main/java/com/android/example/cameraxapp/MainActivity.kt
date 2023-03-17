@@ -62,6 +62,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
+        viewBinding.toggleButton.isEnabled = false
 
 
         // binding variable can now be used to access the GUI components by using the root property of viewBinding
@@ -69,6 +70,7 @@ class MainActivity : AppCompatActivity() {
 
         // Request camera permissions
         if (allPermissionsGranted()) {
+            viewBinding.toggleButton.isEnabled = true
             startCamera()
         } else {
             //request permissions from the user
@@ -84,7 +86,6 @@ class MainActivity : AppCompatActivity() {
 
         // toggleButton view that turns the flashlight on and off
         var light = false
-        viewBinding.toggleButton.isEnabled = false
         var cm = getSystemService(Context.CAMERA_SERVICE) as CameraManager
         viewBinding.toggleButton.setOnClickListener {
             // check to see if the flashlight feature is avaliable
