@@ -50,6 +50,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewBinding: ActivityMainBinding
 
     private var imageCapture: ImageCapture? = null
+    private var light = false
 
     private var videoCapture: VideoCapture<Recorder>? = null
     private var recording: Recording? = null
@@ -85,17 +86,15 @@ class MainActivity : AppCompatActivity() {
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         // toggleButton view that turns the flashlight on and off
-        var light = false
-        var cm = getSystemService(Context.CAMERA_SERVICE) as CameraManager
         viewBinding.toggleButton.setOnClickListener {
             // check to see if the flashlight feature is avaliable
-            if(packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH)) {
-                light = viewBinding.toggleButton.text == "ON"
-                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
-                    //passes two arguments 1. the camera id, 2. on/off flashlight
-                    cm.setTorchMode(cm.cameraIdList[0], light)
-                }
-            }
+//            if(packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH)) {
+//                light = viewBinding.toggleButton.text == "ON"
+//                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+//                    //passes two arguments 1. the camera id, 2. on/off flashlight
+//                    cm.setTorchMode(cm.cameraIdList[0], light)
+//                }
+//            }
         }
 
 
@@ -273,6 +272,14 @@ class MainActivity : AppCompatActivity() {
                 .setQualitySelector(QualitySelector.from(Quality.HIGHEST))
                 .build()
             videoCapture = VideoCapture.withOutput(recorder)
+
+            // flashlight feature
+            var cm = getSystemService(Context.CAMERA_SERVICE) as CameraManager
+            if(packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH)) {
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+                    cm.setTorchMode(cm.cameraIdList[0], light)
+                }
+            }
 
 
 
