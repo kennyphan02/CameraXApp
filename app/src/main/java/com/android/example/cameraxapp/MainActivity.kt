@@ -274,12 +274,12 @@ class MainActivity : AppCompatActivity() {
             videoCapture = VideoCapture.withOutput(recorder)
 
             // flashlight feature
-            var cm = getSystemService(Context.CAMERA_SERVICE) as CameraManager
-            if(packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH)) {
-                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
-                    cm.setTorchMode(cm.cameraIdList[0], light)
-                }
-            }
+//            var cm = getSystemService(Context.CAMERA_SERVICE) as CameraManager
+//            if(packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH)) {
+//                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+//                    cm.setTorchMode(cm.cameraIdList[0], light)
+//                }
+//            }
 
 
 
@@ -292,8 +292,12 @@ class MainActivity : AppCompatActivity() {
 
                 // Bind use cases to camera
                 // After binding to lifecycle
-                cameraProvider.bindToLifecycle(
+                val camera = cameraProvider.bindToLifecycle(
                     this, cameraSelector, preview, imageCapture, videoCapture)
+
+                if (camera.cameraInfo.hasFlashUnit()) {
+                    camera.cameraControl.enableTorch(true)
+                }
 
             } catch(exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
