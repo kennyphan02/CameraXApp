@@ -9,7 +9,6 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.core.ImageCapture
 import androidx.camera.video.Recorder
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
@@ -20,12 +19,8 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import android.widget.Toast
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.core.Preview
-import androidx.camera.core.CameraSelector
 import android.util.Log
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.ImageProxy
+import androidx.camera.core.*
 import androidx.camera.video.FallbackStrategy
 import androidx.camera.video.MediaStoreOutputOptions
 import androidx.camera.video.Quality
@@ -51,6 +46,7 @@ class MainActivity : AppCompatActivity() {
 
     private var imageCapture: ImageCapture? = null
     private var light = false
+    private var camera: Camera? = null
 
     private var videoCapture: VideoCapture<Recorder>? = null
     private var recording: Recording? = null
@@ -82,22 +78,9 @@ class MainActivity : AppCompatActivity() {
         // Set up the listeners for take photo and video capture buttons
         viewBinding.imageCaptureButton.setOnClickListener { takePhoto() }
         viewBinding.videoCaptureButton.setOnClickListener { captureVideo() }
+        viewBinding.toggleButton.setOnClickListener { turnFlashlight() }
 
         cameraExecutor = Executors.newSingleThreadExecutor()
-
-        // toggleButton view that turns the flashlight on and off
-        viewBinding.toggleButton.setOnClickListener {
-            // check to see if the flashlight feature is avaliable
-//            if(packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH)) {
-//                light = viewBinding.toggleButton.text == "ON"
-//                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
-//                    //passes two arguments 1. the camera id, 2. on/off flashlight
-//                    cm.setTorchMode(cm.cameraIdList[0], light)
-//                }
-//            }
-        }
-
-
 
     }
 
@@ -124,6 +107,16 @@ class MainActivity : AppCompatActivity() {
     // If it is a null value, we would exit the function by return.
     // if the photo button is clicked before imageCapture is set up, imageCapture would remain null and crash
 
+    private fun turnFlashlight() {
+        light = viewBinding.toggleButton.text == "ON"
+        if (camera?.cameraInfo?.hasFlashUnit() == true) {
+            camera?.cameraControl?.enableTorch(light)
+        }
+        else {
+            Log.e(TAG, "Phone does not have a flashlight")
+        }
+
+    }
     private fun takePhoto() {
         // Get a stable reference of the modifiable image capture use case
         val imageCapture = imageCapture ?: return
@@ -244,7 +237,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
     }
-
     private fun startCamera() {
         /*
         Creates an instance of ProcessCameraProvider. the variable is used to bind the lifecycle
@@ -273,14 +265,6 @@ class MainActivity : AppCompatActivity() {
                 .build()
             videoCapture = VideoCapture.withOutput(recorder)
 
-            // flashlight feature
-//            var cm = getSystemService(Context.CAMERA_SERVICE) as CameraManager
-//            if(packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH)) {
-//                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
-//                    cm.setTorchMode(cm.cameraIdList[0], light)
-//                }
-//            }
-
 
 
             // Select back camera as a default
@@ -292,12 +276,10 @@ class MainActivity : AppCompatActivity() {
 
                 // Bind use cases to camera
                 // After binding to lifecycle
-                val camera = cameraProvider.bindToLifecycle(
+                // shows the preview of the camera and includes features such as taking a photo and video
+                camera = cameraProvider.bindToLifecycle(
                     this, cameraSelector, preview, imageCapture, videoCapture)
-
-                if (camera.cameraInfo.hasFlashUnit()) {
-                    camera.cameraControl.enableTorch(true)
-                }
+                // turning on flash light
 
             } catch(exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
@@ -306,17 +288,14 @@ class MainActivity : AppCompatActivity() {
         }, ContextCompat.getMainExecutor(this))
 
     }
-
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
         ContextCompat.checkSelfPermission(
             baseContext, it) == PackageManager.PERMISSION_GRANTED
     }
-
     override fun onDestroy() {
         super.onDestroy()
         cameraExecutor.shutdown()
     }
-
     companion object {
         private const val TAG = "CameraXApp"
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
